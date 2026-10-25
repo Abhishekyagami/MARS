@@ -1,0 +1,28 @@
+flowchart LR
+  subgraph CH["Sales channels"]
+    WEB["Own website"]
+    NYK["Nykaa<br/>webhook, 5 rps"]
+    FK["Flipkart<br/>polling, bulk 50, 10 rps"]
+    BLK["Blinkit<br/>webhook, CSV + flaky API"]
+  end
+  subgraph AWS["AWS ap-south-1, private VPC"]
+    ALB["ALB, HTTPS"]
+    API["api service<br/>webhooks, reserve API,<br/>ops console"]
+    PG[("PostgreSQL, RDS Multi-AZ<br/>orders, inventory, ledger,<br/>channel_stock, sync_jobs")]
+    W["worker service<br/>normalizer, reserver,<br/>Flipkart poller, channel pushers,<br/>ERP sender, reconciler"]
+    RD[("Redis<br/>rate limits, locks, velocity")]
+    S3[("S3<br/>raw payloads, Blinkit CSV")]
+  end
+  ERP["Business Central ERP"]
+  OPS["Ops team"]
+
+  WEB & NYK & BLK -->|"webhooks"| ALB
+  OPS -->|"failed syncs, retry"| ALB
+  ALB --> API
+  API -->|"store event, reserve"| PG
+  PG -->|"claim jobs"| W
+  W -->|"poll orders every 2 min"| FK
+  W -.->|"stock push: absolute qty, rate-limited"| CH
+  W -->|"create order once"| ERP
+  W --- RD
+  W --- S3
