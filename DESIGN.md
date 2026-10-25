@@ -92,7 +92,7 @@ WHERE sku = $sku AND on_hand - reserved >= $qty;
 
 If any line updates 0 rows, the whole order rolls back and becomes `REJECTED_NO_STOCK` (v1 reserves all items or none).
 On success, the **same transaction** writes the ledger rows, sets the order to `RESERVED`, bumps `desired_ver` on that
-SKU's `channel_stock` rows and inserts the `ERP_CREATE` job. Pseudo-code: [`reservation.pseudo.md`](reservation.pseudo.md).
+SKU's `channel_stock` rows and inserts the `ERP_CREATE` job.
 
 **Walk-through.** `MRS-LIP-104` has `on_hand = 10` and `reserved = 9`. Nykaa order A and Blinkit order B each buy 1 in
 the same second.
